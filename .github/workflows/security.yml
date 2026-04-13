@@ -83,7 +83,12 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    # Dependency Review API requires GitHub Advanced Security on private repos.
+    # Skip on private repos without GHAS; npm audit + Dependabot cover the
+    # same ground (vulnerability detection).
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.repository.private == false
     timeout-minutes: 10
 
     steps:
