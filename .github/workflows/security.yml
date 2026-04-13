@@ -83,8 +83,9 @@ jobs:
   # Dependency Review is intentionally omitted: it requires the repository's
   # Dependency Graph feature to be enabled (Settings → Code security →
   # Dependency graph), which cannot be toggled from workflow code. npm audit
-  # (above) and Dependabot (.github/dependabot.yml) cover the same ground:
-  # vulnerability detection and automated updates.
+  # (above) and Dependabot (.github/dependabot.yml) provide overlapping
+  # coverage via vulnerability detection and automated updates, but do not
+  # fully replace the PR-diff-focused Dependency Review.
 
   secret-scan:
     name: Secret scan (gitleaks)
