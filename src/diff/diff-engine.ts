@@ -1,4 +1,5 @@
 import type { DiffResult, MarkdownSection, Snapshot, SiteConfig } from "../types";
+import { parseMarkdownSections } from "../utils/markdown-parser";
 
 export class DiffEngine {
   computeDiffs(
@@ -42,8 +43,8 @@ export class DiffEngine {
       if (prev.contentHash === curr.contentHash) continue;
 
       const sectionDiffs = this.diffSections(
-        this.parseSections(prev.content),
-        this.parseSections(curr.content),
+        parseMarkdownSections(prev.content),
+        parseMarkdownSections(curr.content),
         current.siteId,
         siteConfig.name,
         curr.path,
@@ -69,41 +70,6 @@ export class DiffEngine {
     }
 
     return results;
-  }
-
-  parseSections(markdown: string): MarkdownSection[] {
-    const lines = markdown.split("\n");
-    const sections: MarkdownSection[] = [];
-    let current: MarkdownSection | null = null;
-    const headingStack: string[] = [];
-
-    for (const line of lines) {
-      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
-      if (headingMatch) {
-        if (current) sections.push(current);
-        const level = headingMatch[1].length;
-        const heading = headingMatch[2].trim();
-
-        while (headingStack.length >= level) headingStack.pop();
-        headingStack.push(heading);
-        const fullPath = headingStack.join(" > ");
-
-        current = { heading, level, content: line + "\n", fullPath };
-      } else if (current) {
-        current.content += line + "\n";
-      } else {
-        if (line.trim()) {
-          current = {
-            heading: "(preamble)",
-            level: 0,
-            content: line + "\n",
-            fullPath: "(preamble)",
-          };
-        }
-      }
-    }
-    if (current) sections.push(current);
-    return sections;
   }
 
   private diffSections(

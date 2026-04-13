@@ -1,4 +1,5 @@
 import type { AIAnalysis, DiffResult, RelatedNote } from "../types";
+import type { MediaResult } from "./media-finder";
 
 export function buildFrontmatter(analysis: AIAnalysis, diff: DiffResult): Record<string, unknown> {
   return {
@@ -31,7 +32,8 @@ export function formatFrontmatter(fm: Record<string, unknown>): string {
 export function buildLearningNoteBody(
   analysis: AIAnalysis,
   diffs: DiffResult[],
-  relatedNotes: RelatedNote[]
+  relatedNotes: RelatedNote[],
+  media: MediaResult[] = []
 ): string {
   const sections: string[] = [];
 
@@ -78,7 +80,15 @@ export function buildLearningNoteBody(
     sections.push(`## 実践課題\n${actions}\n`);
   }
 
-  if (analysis.youtubeQueries.length > 0) {
+  if (media.length > 0) {
+    const mediaLines = media.map((m) => {
+      if (m.type === "youtube" && m.url.includes("watch?v=")) {
+        return `- ${m.title}\n  ${m.embedCode}`;
+      }
+      return `- [${m.title}](${m.url})`;
+    }).join("\n");
+    sections.push(`## 学習リソース\n${mediaLines}\n`);
+  } else if (analysis.youtubeQueries.length > 0) {
     const queries = analysis.youtubeQueries
       .map((q) => `- [YouTube: "${q}"](https://www.youtube.com/results?search_query=${encodeURIComponent(q)})`)
       .join("\n");

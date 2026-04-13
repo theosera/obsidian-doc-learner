@@ -1,5 +1,6 @@
 import { App, normalizePath } from "obsidian";
 import type { AIAnalysis, DiffResult, DocLearnerSettings, LearningNote, RelatedNote } from "../types";
+import type { MediaResult } from "./media-finder";
 import { buildFrontmatter, buildLearningNoteBody, formatFrontmatter } from "./templates";
 
 export class NoteGenerator {
@@ -11,11 +12,12 @@ export class NoteGenerator {
   generate(
     analysis: AIAnalysis,
     diffs: DiffResult[],
-    relatedNotes: RelatedNote[]
+    relatedNotes: RelatedNote[],
+    media: MediaResult[] = []
   ): LearningNote {
     const representative = diffs[0];
     const frontmatter = buildFrontmatter(analysis, representative);
-    const body = buildLearningNoteBody(analysis, diffs, relatedNotes);
+    const body = buildLearningNoteBody(analysis, diffs, relatedNotes, media);
 
     const date = representative.detectedAt.split("T")[0];
     const slug = this.slugify(analysis.title);

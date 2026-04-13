@@ -12,8 +12,11 @@ import type { IAIProvider } from "./ai/provider";
 import { VaultSearch } from "./vault-search/vault-search";
 import { NoteGenerator } from "./generator/note-generator";
 import { DashboardGenerator } from "./generator/dashboard";
+import { MediaFinder } from "./generator/media-finder";
+import { LearningPathGenerator } from "./generator/learning-path";
 import { DocLearnerSidebar, SIDEBAR_VIEW_TYPE } from "./ui/sidebar";
 import { DiffDetailView, DIFF_VIEW_TYPE } from "./ui/diff-view";
+import { DashboardView, DASHBOARD_VIEW_TYPE } from "./ui/dashboard-view";
 
 export default class DocLearnerPlugin extends Plugin {
   settings: DocLearnerSettings = DEFAULT_SETTINGS;
@@ -26,6 +29,8 @@ export default class DocLearnerPlugin extends Plugin {
   private vaultSearch!: VaultSearch;
   private noteGenerator!: NoteGenerator;
   private dashboardGenerator!: DashboardGenerator;
+  private mediaFinder!: MediaFinder;
+  private learningPathGen!: LearningPathGenerator;
   private checkInterval: ReturnType<typeof setInterval> | null = null;
 
   async onload(): Promise<void> {
@@ -37,9 +42,12 @@ export default class DocLearnerPlugin extends Plugin {
     this.vaultSearch = new VaultSearch(this.settings);
     this.noteGenerator = new NoteGenerator(this.app, this.settings);
     this.dashboardGenerator = new DashboardGenerator(this.app, this.settings);
+    this.mediaFinder = new MediaFinder();
+    this.learningPathGen = new LearningPathGenerator(this.app, this.settings);
 
     this.registerView(SIDEBAR_VIEW_TYPE, (leaf) => new DocLearnerSidebar(leaf, this));
     this.registerView(DIFF_VIEW_TYPE, (leaf) => new DiffDetailView(leaf));
+    this.registerView(DASHBOARD_VIEW_TYPE, (leaf) => new DashboardView(leaf, this));
 
     this.addRibbonIcon("book-open", "Doc Learner", () => this.activateSidebar());
 
@@ -57,8 +65,20 @@ export default class DocLearnerPlugin extends Plugin {
 
     this.addCommand({
       id: "doc-learner-dashboard",
-      name: "ダッシュボード更新",
+      name: "ダッシュボードを開く",
+      callback: () => this.activateDashboard(),
+    });
+
+    this.addCommand({
+      id: "doc-learner-dashboard-md",
+      name: "ダッシュボード Markdown 更新",
       callback: () => this.dashboardGenerator.regenerate(),
+    });
+
+    this.addCommand({
+      id: "doc-learner-learning-path",
+      name: "学習ロードマップ更新",
+      callback: () => this.learningPathGen.generate(),
     });
 
     this.addCommand({
@@ -86,6 +106,7 @@ export default class DocLearnerPlugin extends Plugin {
     this.vaultSearch = new VaultSearch(this.settings);
     this.noteGenerator = new NoteGenerator(this.app, this.settings);
     this.dashboardGenerator = new DashboardGenerator(this.app, this.settings);
+    this.learningPathGen = new LearningPathGenerator(this.app, this.settings);
     this.scheduleAutoCheck();
   }
 
@@ -165,13 +186,17 @@ export default class DocLearnerPlugin extends Plugin {
         const analysis = analyses[i];
         const diffs = grouped.get(keys[i])!;
 
-        const relatedNotes = await this.vaultSearch.findRelated(analysis);
-        const note = this.noteGenerator.generate(analysis, diffs, relatedNotes);
+        const [relatedNotes, media] = await Promise.all([
+          this.vaultSearch.findRelated(analysis),
+          this.mediaFinder.findMedia(analysis),
+        ]);
+        const note = this.noteGenerator.generate(analysis, diffs, relatedNotes, media);
         await this.noteGenerator.write(note);
         written++;
       }
 
       await this.dashboardGenerator.regenerate();
+      await this.learningPathGen.generate();
       new Notice(`Doc Learner: ${written} 件の学習ノートを生成しました`);
       this.pendingDiffs = [];
     } catch (err) {
@@ -215,6 +240,18 @@ export default class DocLearnerPlugin extends Plugin {
       case "glm":
         return new GLMProvider(apiKey, cfg.model);
     }
+  }
+
+  private async activateDashboard(): Promise<void> {
+    const existing = this.app.workspace.getLeavesOfType(DASHBOARD_VIEW_TYPE);
+    if (existing.length > 0) {
+      this.app.workspace.revealLeaf(existing[0]);
+      return;
+    }
+
+    const leaf = this.app.workspace.getLeaf(true);
+    await leaf.setViewState({ type: DASHBOARD_VIEW_TYPE, active: true });
+    this.app.workspace.revealLeaf(leaf);
   }
 
   private async activateSidebar(): Promise<void> {

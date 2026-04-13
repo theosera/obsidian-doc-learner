@@ -1,5 +1,6 @@
 import { App, normalizePath } from "obsidian";
 import type { CrawlResult, Snapshot, SnapshotPage } from "../types";
+import { toSafeTimestamp, fromSafeTimestamp } from "../utils/date";
 
 const SNAPSHOT_DIR = ".doc-learner/snapshots";
 
@@ -20,7 +21,7 @@ export class SnapshotManager {
     }));
 
     const snapshot: Snapshot = { siteId, timestamp, pages };
-    const dir = normalizePath(`${SNAPSHOT_DIR}/${siteId}/${this.tsToDir(timestamp)}`);
+    const dir = normalizePath(`${SNAPSHOT_DIR}/${siteId}/${toSafeTimestamp(new Date(timestamp))}`);
 
     await this.ensureDir(dir);
 
@@ -64,7 +65,7 @@ export class SnapshotManager {
 
   private async loadSnapshot(siteId: string, dir: string): Promise<Snapshot> {
     const metaPath = normalizePath(`${dir}/_meta.json`);
-    const timestamp = dir.split("/").pop()!.replace(/_/g, ":");
+    const timestamp = fromSafeTimestamp(dir.split("/").pop()!);
 
     let pageMetas: { url: string; path: string; contentHash: string }[] = [];
     if (await this.app.vault.adapter.exists(metaPath)) {
@@ -112,10 +113,6 @@ export class SnapshotManager {
     if (!(await this.app.vault.adapter.exists(dir))) {
       await this.app.vault.adapter.mkdir(dir);
     }
-  }
-
-  private tsToDir(iso: string): string {
-    return iso.replace(/:/g, "_").replace(/\.\d+Z$/, "Z");
   }
 
   private simpleHash(str: string): string {
