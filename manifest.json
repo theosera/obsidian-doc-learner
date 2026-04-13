@@ -1,0 +1,10 @@
+{
+  "id": "doc-learner",
+  "name": "Doc Learner",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Detect documentation updates, analyze changes with AI, and generate structured learning materials.",
+  "author": "theosera",
+  "authorUrl": "https://github.com/theosera",
+  "isDesktopOnly": true
+}
