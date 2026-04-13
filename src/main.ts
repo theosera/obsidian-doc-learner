@@ -1,6 +1,6 @@
 import { Notice, Plugin } from "obsidian";
 import type { DiffResult, DocLearnerSettings } from "./types";
-import { DEFAULT_SETTINGS } from "./types";
+import { DEFAULT_SETTINGS, resolveApiKey } from "./types";
 import { DocLearnerSettingTab } from "./settings";
 import { FetchCrawler } from "./crawler/fetch-crawler";
 import { SnapshotManager } from "./diff/snapshot-manager";
@@ -142,7 +142,7 @@ export default class DocLearnerPlugin extends Plugin {
 
     const provider = this.createAIProvider();
     if (!provider) {
-      new Notice("Doc Learner: AI プロバイダーの設定を確認してください（API キーが未設定）");
+      new Notice("Doc Learner: 環境変数に API キーが見つかりません。~/.zshrc を確認し、Obsidian を再起動してください。");
       return;
     }
 
@@ -199,15 +199,21 @@ export default class DocLearnerPlugin extends Plugin {
 
   private createAIProvider(): IAIProvider | null {
     const cfg = this.settings.aiProvider;
-    if (!cfg.apiKey) return null;
+    const apiKey = resolveApiKey(cfg.primary);
+    if (!apiKey) {
+      console.error(
+        `[doc-learner] 環境変数が未設定です。~/.zshrc に ${cfg.primary} 用のキーを設定してください。`
+      );
+      return null;
+    }
 
     switch (cfg.primary) {
       case "anthropic":
-        return new AnthropicProvider(cfg.apiKey, cfg.model);
+        return new AnthropicProvider(apiKey, cfg.model);
       case "qwen":
-        return new QwenProvider(cfg.apiKey, cfg.model);
+        return new QwenProvider(apiKey, cfg.model);
       case "glm":
-        return new GLMProvider(cfg.apiKey, cfg.model);
+        return new GLMProvider(apiKey, cfg.model);
     }
   }
 

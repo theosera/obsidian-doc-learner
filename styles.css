@@ -188,3 +188,30 @@ pre.dl-removed {
   padding-top: 12px;
   border-top: 1px solid var(--background-modifier-border);
 }
+
+/* Environment variable status */
+.dl-env-status {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+}
+
+.dl-env-status h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+}
+
+.dl-env-row {
+  padding: 4px 0;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+}
+
+.dl-env-ok {
+  color: var(--text-success, #4caf50);
+}
+
+.dl-env-missing {
+  color: var(--text-error, #f44336);
+}

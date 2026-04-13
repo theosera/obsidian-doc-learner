@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type DocLearnerPlugin from "./main";
 import type { SiteConfig } from "./types";
+import { ENV_KEY_MAP, resolveApiKey } from "./types";
 
 export class DocLearnerSettingTab extends PluginSettingTab {
   plugin: DocLearnerPlugin;
@@ -55,18 +56,25 @@ export class DocLearnerSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName("API キー")
-      .setDesc("AI プロバイダーの API キー")
-      .addText((cb) =>
-        cb
-          .setPlaceholder("sk-...")
-          .setValue(this.plugin.settings.aiProvider.apiKey)
-          .onChange(async (v) => {
-            this.plugin.settings.aiProvider.apiKey = v;
-            await this.plugin.saveSettings();
-          })
-      );
+    const envStatus = containerEl.createDiv({ cls: "dl-env-status" });
+    envStatus.createEl("h4", { text: "環境変数ステータス（~/.zshrc）" });
+
+    for (const [provider, envName] of Object.entries(ENV_KEY_MAP)) {
+      const key = resolveApiKey(provider);
+      const detected = key !== null && key.length > 0;
+      const row = envStatus.createDiv({ cls: "dl-env-row" });
+      const icon = detected ? "✅" : "❌";
+      const masked = detected ? `${key!.substring(0, 6)}...${key!.slice(-4)}` : "未設定";
+      row.createEl("span", {
+        text: `${icon} ${envName}: ${masked}`,
+        cls: detected ? "dl-env-ok" : "dl-env-missing",
+      });
+    }
+
+    envStatus.createEl("small", {
+      text: "API キーは ~/.zshrc の環境変数から読み取ります。設定後は Obsidian を再起動してください。",
+      cls: "dl-muted",
+    });
   }
 
   private renderVaultSection(containerEl: HTMLElement): void {

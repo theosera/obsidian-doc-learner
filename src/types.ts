@@ -24,10 +24,24 @@ export interface DocLearnerSettings {
 export interface AIProviderConfig {
   primary: "anthropic" | "qwen" | "glm";
   model: string;
-  apiKey: string;
   fallback?: "anthropic" | "qwen" | "glm";
   fallbackModel?: string;
-  fallbackApiKey?: string;
+}
+
+/**
+ * Maps provider names to their expected environment variable names.
+ * Keys are set in ~/.zshrc: export ANTHROPIC_API_KEY="sk-..."
+ */
+export const ENV_KEY_MAP: Record<string, string> = {
+  anthropic: "ANTHROPIC_API_KEY",
+  qwen: "QWEN_API_KEY",
+  glm: "GLM_API_KEY",
+};
+
+export function resolveApiKey(provider: string): string | null {
+  const envName = ENV_KEY_MAP[provider];
+  if (!envName) return null;
+  return process.env[envName] ?? null;
 }
 
 export interface CrawlResult {
@@ -113,7 +127,6 @@ export const DEFAULT_SETTINGS: DocLearnerSettings = {
   aiProvider: {
     primary: "anthropic",
     model: "claude-haiku-4-5-20251001",
-    apiKey: "",
   },
   sourceVaultPattern:
     "/Users/theosera/Library/Mobile Documents/iCloud~md~obsidian/Documents/iCloud Vault {year}",
