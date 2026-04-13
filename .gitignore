@@ -4,3 +4,5 @@ main.js
 data/
 *.js.map
 .DS_Store
+package-lock.json
+.pnpm-store/
