@@ -46,7 +46,7 @@ jobs:
           echo "Resolved tag=$TAG version=$VERSION"
 
       - name: Checkout (at release tag)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.resolve.outputs.tag }}
 
