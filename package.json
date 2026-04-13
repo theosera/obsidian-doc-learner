@@ -10,7 +10,8 @@
   },
   "keywords": ["obsidian-plugin", "documentation", "learning", "ai"],
   "author": "theosera",
-  "license": "MIT",
+  "license": "UNLICENSED",
+  "private": true,
   "devDependencies": {
     "@types/node": "^22.0.0",
     "esbuild": "^0.25.0",
