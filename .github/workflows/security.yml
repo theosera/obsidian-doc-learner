@@ -83,26 +83,12 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    # Dependency Review API requires GitHub Advanced Security on private repos.
-    # Skip on private repos without GHAS; npm audit + Dependabot cover the
-    # same ground (vulnerability detection).
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.repository.private == false
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: on-failure
+  # Dependency Review is intentionally omitted: it requires the repository's
+  # Dependency Graph feature to be enabled (Settings → Code security →
+  # Dependency graph), which cannot be toggled from workflow code. npm audit
+  # (above) and Dependabot (.github/dependabot.yml) provide overlapping
+  # coverage via vulnerability detection and automated updates, but do not
+  # fully replace the PR-diff-focused Dependency Review.
 
   secret-scan:
     name: Secret scan (gitleaks)
